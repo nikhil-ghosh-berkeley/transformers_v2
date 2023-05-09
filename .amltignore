@@ -1,0 +1,5 @@
+examples/legacy/
+examples/research_projects
+wandb/
+*_output/
+gpt2/
