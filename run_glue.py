@@ -21,12 +21,12 @@ import os
 import random
 import sys
 from dataclasses import dataclass, field
-from typing import Optional, Tuple
+from typing import Optional
 
 import datasets
 import evaluate
+import torch
 import numpy as np
-from build_gpt2 import build_model
 from custom_trainer import CustomTrainer
 from datasets import load_dataset
 
@@ -363,7 +363,7 @@ def main():
             num_labels = len(label_list)
 
     # Load pretrained model and tokenizer
-    build_model(num_labels, model_dir=model_args.model_name_or_path)
+    # build_model(num_labels, model_dir=model_args.model_name_or_path)
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
     config = AutoConfig.from_pretrained(
@@ -381,16 +381,20 @@ def main():
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
-    original_model = AutoModelForSequenceClassification.from_pretrained(
-        model_args.model_name_or_path,
-        from_tf=bool(".ckpt" in model_args.model_name_or_path),
-        config=config,
-        cache_dir=model_args.cache_dir,
-        revision=model_args.model_revision,
-        use_auth_token=True if model_args.use_auth_token else None,
-        ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
-    )
 
+    if model_args.do_copy:
+        original_model = AutoModelForSequenceClassification.from_pretrained(
+            model_args.model_name_or_path,
+            from_tf=bool(".ckpt" in model_args.model_name_or_path),
+            config=config,
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None,
+            ignore_mismatched_sizes=model_args.ignore_mismatched_sizes,
+        )
+        original_state = original_model.state_dict()
+    # assert not hasattr(original_model, "score")
+    # original_model.score = torch.nn.Linear(config.n_embd, num_labels, bias=False)
     if model_args.subsamp_ratio is None:
         if model_args.prop_subsamp is None:
             config.subsamp_ratio = 1.0
@@ -408,14 +412,13 @@ def main():
         config.n_embd = new_encoder_embed_dim
 
     model = GPT2ForSequenceClassification(config)
-    original_state = original_model.state_dict()
     model_state = model.state_dict()
     selector_generator = SelectorGenerator()
 
-    for name, param in original_model.named_parameters():
+    for name, param in model.named_parameters():
         param_group = get_param_group(name)
-        selectors = selector_generator.generate(param.shape, model_state[name].shape, random=False)
         if model_args.do_copy:
+            selectors = selector_generator.generate(original_state[name].shape, param.shape, random=False)
             model_state[name].copy_(original_state[name][np.ix_(*selectors)])
         if  model_args.do_scale:
             if param_group != "input":
@@ -583,11 +586,11 @@ def main():
         )
         metrics["train_samples"] = min(max_train_samples, len(train_dataset))
 
-        trainer.save_model()  # Saves the tokenizer too for easy upload
+        # trainer.save_model()  # Saves the tokenizer too for easy upload
 
-        trainer.log_metrics("train", metrics)
-        trainer.save_metrics("train", metrics)
-        trainer.save_state()
+        # trainer.log_metrics("train", metrics)
+        # trainer.save_metrics("train", metrics)
+        # trainer.save_state()
 
     # Evaluation
     if training_args.do_eval:

@@ -1,8 +1,8 @@
 from transformers import GPT2ForSequenceClassification, GPT2Tokenizer
 import os
 
-def build_model(num_labels, model_dir="pretrained_models"):
-    model = GPT2ForSequenceClassification.from_pretrained("gpt2", num_labels=num_labels)
+def build_model(model_dir="gpt2"):
+    model = GPT2ForSequenceClassification.from_pretrained("gpt2")
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
     # Define a padding token
@@ -13,3 +13,7 @@ def build_model(num_labels, model_dir="pretrained_models"):
     # Save the model and tokenizer in a directory
     model.save_pretrained(model_dir)
     tokenizer.save_pretrained(model_dir)
+
+if __name__ == "__main__":
+    print("hello")
+    build_model()
