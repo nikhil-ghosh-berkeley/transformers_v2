@@ -1,0 +1,80 @@
+description: sweep gpt2 qqp lr with subsamp_ratio determined by linear contour line (0.409, 0.591) val 7.76e-5
+
+target:
+  service: amlk8s
+  name: itplabrr1cl1
+  vc: resrchvc
+# target:
+#   service: amlk8s
+#   name: ms-shared
+
+# option to add key for apt: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+# install fairseq requirements to docker image
+# image is older version of pytorch because newer python version has threading error
+environment:
+  image: nikghosh09/transformers:latest
+  registry: docker.io # any public registry can be specified here
+  setup:
+    - export HF_DATASETS_CACHE="/mnt/default/huggingface/datasets"
+    - pip install tqdm==4.62.3 --user
+
+code:
+  # local directory of the code. this will be uploaded to the server.
+  # $CONFIG_DIR is expanded to the directory of this config file
+  local_dir: $CONFIG_DIR/transformers_v2
+
+search:
+  job_template:
+    name: sweep_{experiment_name:s}_{auto:s}
+    sku: G1
+    command:
+    - python run_glue.py
+      --model_name_or_path /mnt/default/huggingface/gpt2
+      --task_name qqp
+      --do_train
+      --do_eval
+      --fp16
+      --max_seq_length 128
+      --per_device_train_batch_size 32
+      --per_device_eval_batch_size 512
+      --learning_rate {lr}
+      --prop_subsamp '(0.409, 0.427)'
+      --max_steps 34000
+      --logging_dir $$AMLT_OUTPUT_DIR
+      --output_dir qqp_ouput
+      --evaluation_strategy steps
+      --save_strategy no
+      --seed {seed}
+      --sample_prob {sample_prob}
+      --report_to tensorboard
+      --overwrite_output_dir
+      --ignore_mismatched_sizes
+
+  sampling: grid  
+  max_trials: 1000
+  parallel_trials: 1000
+  # params:
+  #   - name: lr
+  #     values: choice(2.5e-6, 5e-6, 1e-5, 2e-5, 4e-5)
+  #   - name: subsamp_ratio
+  #     values: choice(0.25, 0.3536, 0.5, 0.7071, 1) 
+  #   - name: sample_prob
+  #     values: choice(0.25, 0.3536, 0.5, 0.7071, 1)
+  #   - name: seed
+  #     values: choice(1, 2, 3)
+  # params:
+  #   - name: lr
+  #     values: choice(1e-5, 1.5e-5, 2.27e-5, 3.42e-5, 5.15e-5, 7.76e-5, 1.17e-4, 1.76e-4, 2.65e-4, 4e-4)
+  #   - name: subsamp_ratio
+  #     values: choice(1, 0.75, 0.6, 0.5, 0.42857, 0.375, 0.3333, 0.3, 0.2727, 0.25)
+  #   - name: sample_prob
+  #     values: choice(1, 0.75, 0.6, 0.5, 0.42857, 0.375, 0.3333, 0.3, 0.2727, 0.25)
+  #   - name: seed
+  #     values: choice(7)
+  params:
+    - name: lr
+      values: choice(1e-5, 1.5e-5, 2.27e-5, 3.42e-5, 5.15e-5, 7.76e-5, 1.17e-4, 1.76e-4, 2.65e-4, 4e-4)
+    - name: sample_prob
+      values: choice(0.25, 0.33, 0.42, 0.5, 0.58, 0.67, 0.75, 0.83, 0.92, 1.00)
+    - name: seed
+      values: choice(1, 2, 3, 4, 5, 6)
