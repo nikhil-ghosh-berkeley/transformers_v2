@@ -12,6 +12,6 @@ def download_experiment(exp):
 # n_jobs = min(24, len(exps))
 # results = Parallel(n_jobs=n_jobs)(delayed(download_experiment)(exp) for exp in exps)    
     
-exps = ["qqp_subsamp_low_lr_high", "qqp_subsamp_high_lr_low", "qqp_subsamp_high_lr_low2", "qqp_subsamp_low_lr_low", "qqp_subsamp_low_lr_low2"]
+exps = ["qqp_subsamp_low_lr_high", "qqp_subsamp_low_lr_high2",  "qqp_subsamp_high_lr_low", "qqp_subsamp_high_lr_low2", "qqp_subsamp_high_lr_low3",  "qqp_subsamp_low_lr_low", "qqp_subsamp_low_lr_low2"]
 n_jobs = min(24, len(exps))
 results = Parallel(n_jobs=n_jobs)(delayed(download_experiment)(exp) for exp in exps)   
