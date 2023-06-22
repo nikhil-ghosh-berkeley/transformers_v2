@@ -3,3 +3,6 @@ examples/research_projects
 wandb/
 *_output/
 gpt2/
+processed/
+scripts/
+results/

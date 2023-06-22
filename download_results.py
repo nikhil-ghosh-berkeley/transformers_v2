@@ -14,3 +14,4 @@ results = Parallel(n_jobs=n_jobs)(delayed(download_experiment)(exp) for exp in e
 # exps = ["qqp_subsamp_low_lr_high", "qqp_subsamp_low_lr_high2",  "qqp_subsamp_high_lr_low", "qqp_subsamp_high_lr_low2", "qqp_subsamp_high_lr_low3",  "qqp_subsamp_low_lr_low", "qqp_subsamp_low_lr_low2"]
 # n_jobs = min(24, len(exps))
 # results = Parallel(n_jobs=n_jobs)(delayed(download_experiment)(exp) for exp in exps)   
+# results = Parallel(n_jobs=n_jobs)(delayed(download_experiment)(exp) for exp in exps)   
