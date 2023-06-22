@@ -21,7 +21,7 @@ environment:
 code:
   # local directory of the code. this will be uploaded to the server.
   # $CONFIG_DIR is expanded to the directory of this config file
-  local_dir: $CONFIG_DIR/transformers_v2
+  local_dir: $CONFIG_DIR/src
 
 search:
   job_template:
