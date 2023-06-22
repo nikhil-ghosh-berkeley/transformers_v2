@@ -16,8 +16,7 @@ environment:
   registry: docker.io # any public registry can be specified here
   setup:
     - export HF_DATASETS_CACHE="/mnt/default/huggingface/datasets"
-    - pip install tqdm==4.62.3 --user
-
+    - export HF_DATASETS_IN_MEMORY_MAX_SIZE=10_000_000_000
 code:
   # local directory of the code. this will be uploaded to the server.
   # $CONFIG_DIR is expanded to the directory of this config file
@@ -27,6 +26,9 @@ search:
   job_template:
     name: sweep_{experiment_name:s}_{auto:s}
     sku: G1
+    submit_args:
+      env:
+        AZUREML_DATASET_HTTP_RETRY_COUNT: 14
     command:
     - python run_glue.py
       --model_name_or_path /mnt/default/huggingface/gpt2
@@ -37,18 +39,19 @@ search:
       --max_seq_length 128
       --per_device_train_batch_size 32
       --per_device_eval_batch_size 512
-      --dataloader_num_workers 4
+      --dataloader_num_workers 0
       --learning_rate {lr}
-      --subsamp_ratio {subsamp_ratio}
+      --dropout {dropout}
       --max_steps 34000
       --logging_dir $$AMLT_OUTPUT_DIR
       --output_dir qqp_ouput
       --evaluation_strategy steps
       --save_strategy no
       --seed {seed}
-      --sample_prob {sample_prob}
+      --subsamp_ratio {subsamp_ratio}
       --report_to tensorboard
       --overwrite_output_dir
+      --ignore_mismatched_sizes
 
   sampling: grid  
   max_trials: 1000
@@ -62,21 +65,25 @@ search:
   #     values: choice(0.7071, 1)
   #   - name: seed
   #     values: choice(1)
-  # # params:
-  #   - name: lr
-  #     values: choice(1e-5, 1.5e-5, 2.27e-5, 3.42e-5, 5.15e-5, 7.76e-5, 1.17e-4, 1.76e-4, 2.65e-4, 4e-4)
-  #   - name: subsamp_ratio
-  #     values: choice(0.25, 0.29, 0.34, 0.40, 0.46, 0.54, 0.63, 0.73, 0.86, 1.00)
-  #   - name: sample_prob
-  #     values: choice(0.25, 0.29, 0.34, 0.40, 0.46, 0.54, 0.63, 0.73, 0.86, 1.00)
-  #   - name: seed
-  #     values: choice(1)
+  # choice(1e-5, 1.5e-5, 2.27e-5, 3.42e-5, 5.15e-5, 7.76e-5, 1.17e-4, 1.76e-4, 2.65e-4, 4e-4, 6e-4, 9e-4, 1.35e-3, 2.02e-3)
+  # choice(1e-05, 1.21e-05, 1.47e-05, 1.79e-05, 2.17e-05, 2.64e-05, 3.21e-05, 3.89e-05, 4.73e-05, 5.74e-05, 6.97e-05, 8.46e-05, 0.000103, 0.000125, 0.000152, 0.000184, 0.000223, 0.000271, 0.000329, 0.0004)
+  # choice(1e-05, 1.16e-05, 1.35e-05, 1.57e-05, 1.83e-05, 2.13e-05, 2.47e-05, 2.88e-05, 3.35e-05, 3.89e-05, 4.52e-05, 5.26e-05, 6.12e-05, 7.12e-05, 8.27e-05, 9.62e-05, 0.000112, 0.00013, 0.000151, 0.000176)
+  # choice(0.0004, 0.00045, 0.00052, 0.00061, 0.00069, 0.00075, 0.00083)
   params:
     - name: lr
       values: choice(1e-5, 1.5e-5, 2.27e-5, 3.42e-5, 5.15e-5, 7.76e-5, 1.17e-4, 1.76e-4, 2.65e-4, 4e-4)
     - name: subsamp_ratio
-      values: choice(0.25, 0.33, 0.42, 0.5, 0.58, 0.67, 0.75, 0.83, 0.92, 1.00)
-    - name: sample_prob
-      values: choice(0.25, 0.33, 0.42, 0.5, 0.58, 0.67, 0.75, 0.83, 0.92, 1.00)
+      values: choice(0.5, 1.00)
+    - name: dropout
+      values: choice(0, 0.05, 0.1, 0.15, 0.2)
     - name: seed
-      values: choice(5)
+      values: choice(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+  # params:
+  #   - name: lr
+  #     values: choice(1.76e-4, 2.65e-4, 4e-4, 6e-4, 9e-4)
+  #   - name: subsamp_ratio
+  #     values: choice(0.25, 0.33, 0.83, 0.92)
+  #   - name: sample_prob
+  #     values: choice(1.00)
+  #   - name: seed
+  #     values: choice(1)

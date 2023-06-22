@@ -167,6 +167,9 @@ class ModelArguments:
     subsamp_ratio: Optional[float] = field(
         default=None, metadata={"help": "subsampling ratio for model widths. If is None and prop_subsamp None then set to 1.0."}
     )
+    dropout : float = field(
+        default=0.1, metadata={"help": "dropout rate"}
+    )
     sample_prob: float = field(
         default=1.0, metadata={"help": "subsample training dataset randomly"}
     )
@@ -273,7 +276,6 @@ def main():
 
     # Set seed before initializing model.
     set_seed(training_args.seed)
-
     # Get the datasets: you can either provide your own CSV/JSON training and evaluation files (see below)
     # or specify a GLUE benchmark task (the dataset will be downloaded automatically from the datasets Hub).
     #
@@ -382,6 +384,10 @@ def main():
         use_auth_token=True if model_args.use_auth_token else None,
     )
 
+    config.resid_pdrop = model_args.dropout
+    config.embd_pdrop = model_args.dropout
+    config.attn_pdrop = model_args.dropout
+
     if model_args.do_copy:
         original_model = AutoModelForSequenceClassification.from_pretrained(
             model_args.model_name_or_path,
@@ -412,6 +418,7 @@ def main():
         config.n_embd = new_encoder_embed_dim
 
     model = GPT2ForSequenceClassification(config)
+    
     model_state = model.state_dict()
     selector_generator = SelectorGenerator()
 
@@ -424,6 +431,9 @@ def main():
             if param_group != "input":
                 model_state[name].div_(config.subsamp_ratio)
     
+    with torch.no_grad():
+        model.score.weight.fill_(0.)
+
     logger.info(model)
     # Preprocessing the raw_datasets
     if data_args.task_name is not None:
