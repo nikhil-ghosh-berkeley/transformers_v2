@@ -16,7 +16,6 @@ environment:
   registry: docker.io # any public registry can be specified here
   setup:
     - export HF_DATASETS_CACHE="/mnt/default/huggingface/datasets"
-    - pip install tqdm==4.62.3 --user
 
 code:
   # local directory of the code. this will be uploaded to the server.
@@ -37,7 +36,7 @@ search:
       --max_seq_length 128
       --per_device_train_batch_size 32
       --per_device_eval_batch_size 512
-      --dataloader_num_workers 4
+      --dataloader_num_workers 0
       --learning_rate {lr}
       --subsamp_ratio {subsamp_ratio}
       --max_steps 34000

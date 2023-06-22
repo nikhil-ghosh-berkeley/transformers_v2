@@ -164,6 +164,9 @@ class ModelArguments:
     model_name_or_path: str = field(
         metadata={"help": "Path to pretrained model or model identifier from huggingface.co/models"}
     )
+    dropout : float = field(
+        default=0.1, metadata={"help": "dropout rate"}
+    )
     subsamp_ratio: Optional[float] = field(
         default=None, metadata={"help": "subsampling ratio for model widths. If is None and prop_subsamp None then set to 1.0."}
     )
